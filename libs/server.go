@@ -26,7 +26,7 @@ func (self *Server) handler(conn net.Conn) {
 	if n <= 9 {
 		control.ConnClose(conn)
 	}
-
+	control
 	conn.Close()
 }
 func parser(s string) (param map[string]string) {
