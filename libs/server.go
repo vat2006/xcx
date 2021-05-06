@@ -4,6 +4,7 @@ import (
 	"net"
 	"runtime"
 	"strings"
+	"time"
 	"xcx/control"
 )
 
@@ -26,8 +27,8 @@ func (self *Server) handler(conn net.Conn) {
 	if n <= 9 {
 		control.ConnClose(conn)
 	}
-	control
-	conn.Close()
+	control.ConnConnect(conn, parser(string(b[0:n])))
+	time.Sleep(10000)
 }
 func parser(s string) (param map[string]string) {
 	var ss, ps []string
