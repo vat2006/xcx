@@ -5,14 +5,18 @@
             window.onload=function(){
                 let btn=document.querySelector('button');
                 btn.onclick=function(){
-                    let ws=new WebSocket('ws://127.0.0.1:8282');
-                    ws.addEventListener('open',function(e){
-                        console.log('isOpen');
-                        this.send('test');
-                    })
-                    ws.addEventListener('error',function(e){
-                        console.log(e);
-                    })
+                    const socket = new WebSocket('ws://127.0.0.1:8282');
+
+                    // Connection opened
+                    socket.addEventListener('open', function (event) {
+                        console.log('test');
+                        socket.send('Hello Server!');
+                    });
+
+                    // Listen for messages
+                    socket.addEventListener('message', function (event) {
+                        console.log('Message from server ', event.data);
+                    });
                 }
             }
         </script>
