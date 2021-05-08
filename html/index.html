@@ -4,24 +4,26 @@
         <script>
             window.onload=function(){
                 let btn=document.querySelector('button');
+                let input=document.querySelector('input');
+                let chatFrame=document.querySelector('#chatFrame');
+                const socket = new WebSocket('ws://127.0.0.1:8282/consumer/');
+                socket.onopen=()=>{
+                    btn.removeAttribute('disabled');
+                    input.removeAttribute('disabled');
+
+                };
                 btn.onclick=function(){
-                    const socket = new WebSocket('ws://127.0.0.1:8282');
-
-                    // Connection opened
-                    socket.addEventListener('open', function (event) {
-                        console.log('test');
-                        socket.send('Hello Server!');
-                    });
-
-                    // Listen for messages
-                    socket.addEventListener('message', function (event) {
-                        console.log('Message from server ', event.data);
-                    });
+                    let msg=input.value;
+                    socket.send(msg);
+                    input.value='';
+                    chatFrame.innerHTML+="<div>my say : "+msg+"</div>"
                 }
             }
         </script>
     </head>
     <body>
-        <button>开启websocket</button>
+        <div id="chatFrame" style="border: 1px solid #999;border-radius: 2px; height: 15rem;width: 40rem;margin-bottom: 2rem;"></div>
+        <input type="text" disabled=true maxlength="30" style="width: 30rem;"></input>
+        <button disabled=true>send</button>
     </body>
 </html>

@@ -1,8 +1,8 @@
 package main
 
-import "xcx/libs"
+import "xcx/core"
 
 func main() {
-	ser := new(libs.Server)
+	ser := new(core.Server)
 	ser.Start()
 }
