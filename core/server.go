@@ -19,7 +19,7 @@ type clientChan chan string
 func (self *Server) Start() {
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:8282")
 	self.listener, _ = net.ListenTCP("tcp", addr)
-	mainOutChan := make(chan map[string]*clientChan, 2048)
+	mainOutChan := make(chan map[string]clientChan, 2048)
 	mainInChan := make(chan map[string]string, 4096)
 	go StartCore(mainOutChan, mainInChan)
 	for {
@@ -27,7 +27,7 @@ func (self *Server) Start() {
 		go self.handler(client, mainOutChan, mainInChan)
 	}
 }
-func (self *Server) handler(conn net.Conn, mainOutChan chan map[string]*clientChan, mainInChan chan map[string]string) {
+func (self *Server) handler(conn net.Conn, mainOutChan chan map[string]clientChan, mainInChan chan map[string]string) {
 	b := make([]byte, 1024)
 	n, _ := conn.Read(b)
 	if n <= 9 {
@@ -36,8 +36,8 @@ func (self *Server) handler(conn net.Conn, mainOutChan chan map[string]*clientCh
 	rHeader := parser(string(b[0:n]))
 	if doConnect(conn, rHeader) {
 		mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]: strings.Replace(rHeader["path"], "/", "")}
-		inChan := new(clientChan)
-		mainOutChan <- map[string]*clientChan{rHeader["Sec-WebSocket-Key"]: inChan}
+		inChan := make(clientChan,100)
+		mainOutChan <- map[string]clientChan{rHeader["Sec-WebSocket-Key"]: inChan}
 		b := make([]byte, 256)
 		var getMsg string
 		for {
