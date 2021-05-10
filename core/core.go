@@ -1,19 +1,16 @@
 package core
 
-type core struct{
-
+type core struct {
+	listChan chan map[string]chan string
+	inChan   chan map[string]string
 }
 
-func StartCore(outChan chan map[string]clientChan, inChan chan map[string]string) {
+func StartCore(listChan chan map[string]chan string, inChan chan map[string]string) {
 	c := new(core)
-	c.start(outChan, inChan)
+	c.listChan = listChan
+	c.inChan = inChan
+	c.start()
 }
-func (self *core) start(outChan chan map[string]clientChan, inChan chan map[string]string) {
-	select{
-	case msg:=<-inChan:
-		for k,v range msg{
-			if v="consumer":
-			
-		}
-	}
+func (self *core) start() {
+
 }
