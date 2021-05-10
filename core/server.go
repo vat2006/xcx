@@ -8,7 +8,7 @@ import (
 	"net"
 	"runtime"
 	"strings"
-	"xcx/libs"
+	"xcx/control"
 )
 
 type Server struct {
@@ -18,15 +18,15 @@ type Server struct {
 func (self *Server) Start() {
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:8282")
 	self.listener, _ = net.ListenTCP("tcp", addr)
-	mainOutChan := make(chan map[string]chan string, 2048)
+	listChan := make(chan map[string]chan string, 2048)
 	mainInChan := make(chan map[string]string, 4096)
-	go StartCore(mainOutChan, mainInChan)
+	go StartCore(listChan, mainInChan)
 	for {
 		client, _ := self.listener.Accept()
-		go self.handler(client, mainOutChan, mainInChan)
+		go self.handler(client, listChan, mainInChan)
 	}
 }
-func (self *Server) handler(conn net.Conn, mainOutChan chan map[string]chan string, mainInChan chan map[string]string) {
+func (self *Server) handler(conn net.Conn, listChan chan map[string]chan string, mainInChan chan map[string]string) {
 	b := make([]byte, 1024)
 	n, _ := conn.Read(b)
 	if n <= 9 {
@@ -34,18 +34,18 @@ func (self *Server) handler(conn net.Conn, mainOutChan chan map[string]chan stri
 	}
 	rHeader := parser(string(b[0:n]))
 	if doConnect(conn, rHeader) {
-		mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]: strings.Replace(rHeader["path"], "/", "")}
-		inChan := make(chan string, 100)
-		mainOutChan <- map[string]chan string{rHeader["Sec-WebSocket-Key"]: inChan}
-		b := make([]byte, 256)
-		var getMsg string
-		for {
-			n, _ := conn.Read(b)
-			if n > 0 {
-				getMsg = libs.UnCode(b[0:n])
-			}
-			mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]: getMsg}
+		role := strings.ReplaceAll(rHeader["path"], "/", "")
+		clientChan := make(chan string, 100)
+		switch role {
+		case "consumer":
+			c := new(control.Consumer)
+			c.Init(conn, rHeader, clientChan, mainInChan)
+		case "servicer":
+			s := new(control.Servicer)
+			s.Init(conn, rHeader, clientChan, mainInChan)
 		}
+		listChan <- map[string]chan string{rHeader["Sec-WebSocket-Key"]: clientChan}
+		mainInChan <- map[string]string{role: rHeader["Sec-WebSocket-Key"]}
 
 	}
 	//time.Sleep(10000)
@@ -98,14 +98,4 @@ func doConnect(conn net.Conn, param map[string]string) (isConnected bool) {
 	wbuf.WriteString(fmt.Sprintf("Sec-WebSocket-Accept:%s\r\n\r\n", newKey))
 	wbuf.Flush()
 	return true
-}
-
-func clinetWrite(conn net.Conn, inChan clientChan) {
-	select {
-	case msg := <-inChan:
-		wbuf := bufio.NewWriter(conn)
-		wbuf.WriteString(msg)
-		wbuf.Flush()
-	}
-
 }

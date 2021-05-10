@@ -6,14 +6,14 @@ import (
 	"xcx/libs"
 )
 
-type Consumer struct {
+type Servicer struct {
 	conn    net.Conn
 	inChan  chan string
 	outChan chan map[string]string
 	header  map[string]string
 }
 
-func (self *Consumer) Init(conn net.Conn, header map[string]string, inChan chan string, outChan chan map[string]string) {
+func (self *Servicer) Init(conn net.Conn, header map[string]string, inChan chan string, outChan chan map[string]string) {
 	self.conn = conn
 	self.inChan = inChan
 	self.outChan = outChan
@@ -21,7 +21,7 @@ func (self *Consumer) Init(conn net.Conn, header map[string]string, inChan chan 
 	go self.clinetWrite()
 }
 
-func (self *Consumer) Run() {
+func (self *Servicer) Run() {
 	rb := make([]byte, 32)
 	for {
 		n, _ := self.conn.Read(rb)
@@ -29,7 +29,7 @@ func (self *Consumer) Run() {
 		self.outChan <- map[string]string{self.header["Sec-WebSocket-Key"]: msg}
 	}
 }
-func (self *Consumer) clinetWrite() {
+func (self *Servicer) clinetWrite() {
 	select {
 	case msg := <-self.inChan:
 		wbuf := bufio.NewWriter(self.conn)
