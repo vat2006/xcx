@@ -45,7 +45,7 @@ func (self *Server) handler(conn net.Conn, listChan chan map[string]chan string,
 			s.Init(conn, rHeader, clientChan, mainInChan)
 		}
 		listChan <- map[string]chan string{rHeader["Sec-WebSocket-Key"]: clientChan}
-		mainInChan <- map[string]string{role: rHeader["Sec-WebSocket-Key"]}
+		mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]:role}
 
 	}
 	//time.Sleep(10000)
