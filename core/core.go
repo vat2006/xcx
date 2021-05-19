@@ -1,68 +1,79 @@
 package core
 
-type core struct {
-	listChan     chan map[string]chan string
-	inChan       chan map[string]string
-	consumerList map[string]*consumerInfo
-	servicerList map[string]*servicerInfo
-	chanMap      map[string]chan string
-	outChanList  map[string]chan string
-}
-type consumerInfo struct {
-	id       string
-	inChan   chan string
-	servicer string
-}
+import (
+	"container/list"
+	"fmt"
+)
 
-type servicerInfo struct {
+
+type core struct {
+	listChan    chan map[string]chan string
+	inChan      chan map[string]string
+	clientList  
+	chanMap     map[string]chan string
+	outChanList map[string]chan string
+	servicerList list.List
+	counsumerList list.List
+}
+type clientInfo struct {
 	id           string
 	inChan       chan string
-	consumerList []string
+	servicer     string
+	consumerList list.List
+	clientType   string
 }
 
 func StartCore(listChan chan map[string]chan string, inChan chan map[string]string) {
 	c := new(core)
 	c.listChan = listChan
 	c.inChan = inChan
-	c.servicerList = make(map[string]*servicerInfo)
-	c.consumerList = make(map[string]*consumerInfo)
+	c.clientList = make(map[string]*clientInfo)
 	c.chanMap = make(map[string]chan string)
 	c.outChanList = make(map[string]chan string)
+	c.servicerList=list.New()
+	c.counsumerList=list.New()
 	c.start()
 }
 func (self *core) start() {
 	select {
 	case msg := <-self.inChan:
 		for k, v := range msg {
-			switch v {
-			case "consumer":
-				c := new(consumerInfo)
-				c.id = k
-				if _, ok := self.outChanList[k]; ok {
-					c.inChan = self.outChanList[k]
-				}
-				self.consumerList[k] = c
-			case "servicer":
-				s := new(servicerInfo)
-				s.id = k
-				if _, ok := self.outChanList[k]; ok {
-					s.inChan = self.outChanList[k]
-				}
-				self.servicerList[k] = s
+			switch v{
+			case "close":
 			default:
-
-			}
-
+				cInfo := self.clientList[k]
+				switch cInfo.clientType {
+				case "counsumer":
+					if cInfo.servicer==""{
+						
+					}
+				case "servicer":
+					
+				}
+			}			
 		}
+
 	case chanInfo := <-self.listChan:
 		for k, v := range chanInfo {
-			self.outChanList[k] = v
-			if _, ok := self.servicerList[k]; ok {
-				self.servicerList[k].inChan = v
+			fmt.Println(k)
+			self.chanMap[k] = v
+			v <- "ok"
+			msg := <-v
+			cInfo := new (clientInfo)
+			cInfo.id = k
+			cInfo.inChan = v
+			switch msg {
+			case "counsumer":
+				cInfo.clientType = "counsumer"
+				for e:=self.servicerList.Front();e!=nil;e=e.Next(){
+					if(self.clientList[e.Value].)
+				}
+				self.counsumerList.PushBack(k)
+			case "servicer":
+				cInfo.clientType = "servicer"
+				self.servicerList.PushBack(k)
 			}
-			if _, ok := self.consumerList[k]; ok {
-				self.consumerList[k].inChan = v
-			}
+			self.clientList[k] = cInfo
 		}
 	}
 }
