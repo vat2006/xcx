@@ -34,21 +34,18 @@ func (self *Server) handler(conn net.Conn, listChan chan map[string]chan string,
 	}
 	rHeader := parser(string(b[0:n]))
 	if doConnect(conn, rHeader) {
-		role := strings.ReplaceAll(rHeader["path"], "/", "")
-		clientChan := make(chan string, 100)
+		role := strings.ReplaceAll(rHeader["Path"], "/", "")
 		switch role {
 		case "consumer":
 			c := new(control.Consumer)
-			c.Init(conn, rHeader, clientChan, mainInChan)
+			c.Init(conn, rHeader, listChan, mainInChan)
 		case "servicer":
 			s := new(control.Servicer)
-			s.Init(conn, rHeader, clientChan, mainInChan)
+			s.Init(conn, rHeader, listChan, mainInChan)
 		}
-		listChan <- map[string]chan string{rHeader["Sec-WebSocket-Key"]: clientChan}
-		mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]:role}
+		mainInChan <- map[string]string{rHeader["Sec-WebSocket-Key"]: role}
 
 	}
-	//time.Sleep(10000)
 }
 func parser(s string) (param map[string]string) {
 	var ss, ps []string

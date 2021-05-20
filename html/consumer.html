@@ -18,6 +18,9 @@
                     input.value='';
                     chatFrame.innerHTML+="<div>my say : "+msg+"</div>"
                 }
+                socket.onmessage=(msg)=>{
+                    chatFrame.innerHTML+="<div>servicer say : "+msg+"</div>"
+                }
             }
         </script>
     </head>

@@ -2,6 +2,7 @@ package control
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"xcx/libs"
 )
@@ -13,12 +14,24 @@ type Servicer struct {
 	header  map[string]string
 }
 
-func (self *Servicer) Init(conn net.Conn, header map[string]string, inChan chan string, outChan chan map[string]string) {
+func (self *Servicer) Init(conn net.Conn, header map[string]string, listChan chan map[string]chan string, outChan chan map[string]string) {
 	self.conn = conn
-	self.inChan = inChan
+	self.inChan = make(chan string, 2048)
 	self.outChan = outChan
 	self.header = header
-	go self.clinetWrite()
+	listChan <- map[string]chan string{header["Sec-WebSocket-Key"]: self.inChan}
+	msg := <-self.inChan
+	fmt.Println(msg)
+	for {
+		if msg == "ok" {
+
+			self.inChan <- "servicer"
+			go self.clinetWrite()
+			break
+		} else {
+			msg = <-self.inChan
+		}
+	}
 }
 
 func (self *Servicer) Run() {
